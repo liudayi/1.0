@@ -1,13 +1,17 @@
 from typing import Any
 from django.shortcuts import render
-from django.views.generic import TemplateView
-from navbar.mixin import NavbarMixin
-from link.mixins import LinkItemMixin
-from mood.mixin import MoodMixin
-from article.mixins import ArticleMixinView,CategoryMixin
+from django.views.generic import TemplateView,ListView
+from utils.mixins import FrontMixin
+from article.models import Article
 # Create your views here.
-class HomepageView(CategoryMixin,ArticleMixinView,MoodMixin,LinkItemMixin,NavbarMixin,TemplateView):
+class HomepageView(FrontMixin,ListView):
     template_name='website/frontend/homepage.html'
+    model=Article
+    context_object_name='article_list'
+    paginate_by=5
+
+class DashboardView(TemplateView):
+    template_name='website/backend/overview.html'
     
     # def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
     #     context=super().get_context_data(**kwargs)

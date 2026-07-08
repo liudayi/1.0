@@ -3,8 +3,8 @@ import os,posixpath
 from typing import Any
 from django.db.models.base import Model as Model
 from django.db.models.query import QuerySet
-from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, render
 from .models import Category,Article,Purepage
 from django.contrib.auth.mixins import LoginRequiredMixin
 from utils.mixins import AjaxResponseMixin,AtomicMixin
@@ -17,19 +17,21 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.clickjacking import xframe_options_exempt
 from django.db.models import Count
+from utils.mixins import FrontMixin
 # Create your views here.
 
+#CHANGE:修改完成,删除了get_context_data()
 class BlogListView(LoginRequiredMixin,ListView):
-    #对应的前端页面没有作者,因为文章创建者就是作者自己?每个用户只能管理自己的文章?
-    #不,我觉得就是单纯没有写()我记得他在删除类里有做限制,每个人只能删除自己写的文章
+    #后台管理列表
     model=Article
     login_url=reverse_lazy('user-login')
-    """ context_object_name='essay_list' """
+    #context_object_name='essay_list'
     template_name='article/blog_list.html'#后台
-
+    
+    #DONE:限制用户只能查看自己的文章
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context=super().get_context_data(**kwargs)
-        context['essay_list']=Article.objects.select_related('category').all()
+        context['essay_list']=Article.objects.filter(author=self.request.user)
         return context
 
 class BlogCreateView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,CreateView):
@@ -39,7 +41,12 @@ class BlogCreateView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,CreateView
     success_url=reverse_lazy('blog-list-backend')
     #还要添加图片#额外写image_upload类适配
     template_name='article/blog_create_form.html'
-
+    
+    #DONE:绑定用户
+    def form_valid(self, form):
+        form.instance.author=self.request.user
+        return super().form_valid(form)
+    
     def get_context_data(self, **kwargs: Any):
         context=super().get_context_data(**kwargs)
         context['category_list']=Category.objects.all()
@@ -53,43 +60,40 @@ class BlogUpdateView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,UpdateView
     template_name='article/blog_update_form.html'
     #context_object_name='blog'
 
+    #TODO:限制用户只能修改自己的文章
+    def get_object(self, queryset=None) -> Model:
+        obj=super().get_object(queryset)
+        if obj.author != self.request.user:
+            raise Http404("不要尝试修改别人的文章")
+        return obj
+    
+#DONE:前端代码没改
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context=super().get_context_data(**kwargs)
         context['blog']=self.object
         context['category_list']=Category.objects.all()
         return context
 
-    
 class BlogDeleteView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,DeleteView):
     model=Article
     login_url=reverse_lazy('user-login')
     success_url='blog-list-backend'
 
-from navbar.mixin import NavbarMixin
-from link.mixins import LinkItemMixin
-from mood.mixin import MoodMixin
-from article.mixins import ArticleMixinView,CategoryMixin
-
-class ArticleDetailView(CategoryMixin,ArticleMixinView,MoodMixin,LinkItemMixin,NavbarMixin,LoginRequiredMixin,AjaxResponseMixin,DetailView):
+#CHANGE:修改完成,删除了get_context_data(),把点击量增加的步骤写到了get_object()里
+class ArticleDetailView(LoginRequiredMixin,FrontMixin,AjaxResponseMixin,DetailView):
     model=Article
     login_url=reverse_lazy('user-login')
     template_name='article/article_detail.html'
+    context_object_name='article'
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        if not hasattr(self,'object') or self.object is None:
-            self.object=self.get_object()
-        self.object.show_times+=1
-        self.object.save(update_fields=['show_times'])
-        context=super().get_context_data(**kwargs)
-        context['article']=self.object
-        return context
+    def get_object(self, queryset = None) -> Model:
+        #query_set=None是必须的,这是父类函数参数,重写时不能私下改变
+        obj=super().get_object(queryset=queryset)
+        obj.show_times+=1
+        obj.save()
+        return obj
         
-
-
-class ArticleListView(LoginRequiredMixin,AjaxResponseMixin,ListView):
-    model=Article
-    login_url=reverse_lazy('user-login')
-    template_name='article/article_list.html'#前台
+#CHANGE:已删除ArticleListView,因为对应的article/article_list.html并没有在使用
 
 class CategoryCreateView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,CreateView):
     login_url=reverse_lazy('user-login')
@@ -104,14 +108,20 @@ class CategoryListView(LoginRequiredMixin,AjaxResponseMixin,ListView):
     context_object_name='category_list'
     template_name='article/category_list.html'
 
-class CategoryWeightView(CategoryListView):
-    template_name='article/category_weight.html'
+#CHANGE:修改完成
+class CategoryWeightView(LoginRequiredMixin,FrontMixin,AjaxResponseMixin,ListView):
+    #目录详情页.绑定homepage.
+    model=Category
+    login_url=reverse_lazy('user-login')
+    template_name='website/frontend/homepage.html'
+    context_object_name='article_list'
+    paginate_by=5
+    #因为article_weight.html也是搭载在homepage.html上的,所以要写article_list
 
-    def get_context_data(self, **kwargs) -> dict[str, Any]:
-            context = super().get_context_data(**kwargs)
-            context["category_list"] = Category.objects.annotate(blog_number=Count('article'))
-            #count()里写的是 反向查询传送门的名字,即关联模型名小写或related_name=''
-            return context
+    #TODO:后期可以加上category=None的情况。
+    def get_queryset(self) -> QuerySet[Any]:
+        category=get_object_or_404(Category,pk=self.kwargs['pk'])
+        return Article.objects.filter(category=category)   
         
 class CategoryUpdateView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,UpdateView):
     model=Category
@@ -132,7 +142,7 @@ class PurepageCreateView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,Create
     fields=['title','content']
     success_url=reverse_lazy('pure-page-list')
 
-#TODO:静态页面没有作者栏显示,也没有静态页面详情,后续可以看情况修正
+#NOTE:静态页面没有作者栏显示,也没有静态页面详情,后续可以看情况修正
     def form_valid(self, form):
         form.instance.auther=self.request.user
         return super().form_valid(form)

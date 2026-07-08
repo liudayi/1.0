@@ -11,7 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from utils.mixins import AjaxResponseMixin,AtomicMixin
 import json
 # Create your views here.
-class NavbarView(LoginRequiredMixin,ListView):
+class NavbarListView(LoginRequiredMixin,ListView):
     """
     展示导航项,有一个列表页
     """
@@ -58,6 +58,7 @@ class NavUpdateView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,UpdateView)
     success_url=reverse_lazy('navbar-list')
     fields=['title','url','order']
     template_name='navbar/navitem_update_form.html'
+    context_object_name='navitem'
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         """

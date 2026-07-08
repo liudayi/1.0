@@ -13,7 +13,7 @@
                 <ul class="nav navbar-nav">
                     <li id="home-page"><a href="{% url 'homepage' %}">首页</a></li>
                     {% for item in nav_item_list %}
-                        <li id="nav-{{ item.id }}"><a href="{{ item.url }}">{{ item.title }}</a></li>
+                        <li id="nav-{{ item.id }}"><a href="{% url item.url %}">{{ item.title }}</a></li>
                     {% endfor %}
                 </ul>
                 <ul class="nav navbar-nav navbar-right">

@@ -22,7 +22,7 @@
                         <td>{{ forloop.counter }}</td>
                         <td>{{ item.title }}</td>
                         <td><a href="{{ item.url }}">{{ item.url }}</a></td>
-                        <td>{{ item.show_order }}</td>
+                        <td>{{ item.order }}</td>
                         <td>
                             <a href="{% url 'navbar-update' item.pk %}" class="btn btn-warning" role="button">修改</a>
                             &emsp;

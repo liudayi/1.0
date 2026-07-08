@@ -1,7 +1,8 @@
 from typing import Any
 from .models import Mood
+from django.views.generic.base import ContextMixin
 
-class MoodMixin(object):
+class MoodMixin(ContextMixin):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context=super().get_context_data(**kwargs)
         new_mood=Mood.objects.first()#应该只返回一个

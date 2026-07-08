@@ -12,7 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
 
 #如果清理cookie显示403  -->  Forbidden (CSRF cookie not set.): /authentication/user/login/
-# @method_decorator(csrf_exempt,name='dispatch')
+@method_decorator(csrf_exempt,name='dispatch')
 
 class LoginView(FormView):
     template_name='authentication/user_login.html'

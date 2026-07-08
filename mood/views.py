@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView,CreateView,UpdateView,DeleteView
 from utils.mixins import AjaxResponseMixin,AtomicMixin
 from .models import Mood
-from .mixin import MoodMixin
+from utils.mixins import FrontMixin
 # Create your views here.
 class MoodListView(LoginRequiredMixin,ListView):
     login_url='user-login'
@@ -69,11 +69,12 @@ class MoodDeleteView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,DeleteView
             obj.image.delete(save=False)
         return super().post(request,*args,**kwargs)
 
-class MoodTimeLineView(MoodMixin,LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,ListView):
+class MoodTimeLineView(FrontMixin,LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,ListView):
     login_url='user-login'
     model=Mood
     fields=['title','content','mood_type','image']
     context_object_name='mood_list'
     template_name='mood/mood_time_line.html'
-    paginate_by=10
+    #TODO:原代码没有写分页组件,因为页面设计没有预留分页组件的位置.
+    paginate_by=5
     

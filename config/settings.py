@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-wj_n4f%^h=-8soqifn%$tzdi%)7uwn481**c5)53&ads@p4*d)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -143,3 +143,16 @@ MEDIA_ROOT=os.path.join(BASE_DIR,'media').replace('\\','/')
 INTERNAL_IPS=[
     '127.0.0.1',
 ]
+
+
+# settings.py
+
+# 1. 显式告知 Django，这两个本地安全源是绝对可信的，允许它们跨过 CSRF 雷达
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+]
+
+# 2. 如果你的前端 AJAX 请求在跨域或本地回路里有 Cookie 冲突，顺手加上这两行保底
+CSRF_COOKIE_SECURE = False  # 本地测试不需要强制 HTTPS
+CSRF_COOKIE_HTTPONLY = False
