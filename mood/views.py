@@ -75,6 +75,6 @@ class MoodTimeLineView(FrontMixin,LoginRequiredMixin,AtomicMixin,AjaxResponseMix
     fields=['title','content','mood_type','image']
     context_object_name='mood_list'
     template_name='mood/mood_time_line.html'
-    #TODO:原代码没有写分页组件,因为页面设计没有预留分页组件的位置.
+    #CHANGE:原代码没有写分页组件,因为页面设计没有预留分页组件的位置.
     paginate_by=5
     

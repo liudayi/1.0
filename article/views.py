@@ -60,7 +60,7 @@ class BlogUpdateView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,UpdateView
     template_name='article/blog_update_form.html'
     #context_object_name='blog'
 
-    #TODO:限制用户只能修改自己的文章
+    #CHANGE:限制用户只能修改自己的文章
     def get_object(self, queryset=None) -> Model:
         obj=super().get_object(queryset)
         if obj.author != self.request.user:
@@ -78,6 +78,13 @@ class BlogDeleteView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,DeleteView
     model=Article
     login_url=reverse_lazy('user-login')
     success_url='blog-list-backend'
+
+    #TODO:添加删除限制
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        obj=self.get_object()
+        if obj.author!=self.request.user:
+            raise Http404("非本文章作者不可删除文章!")
+        return super().dispatch(request, *args, **kwargs)
 
 #CHANGE:修改完成,删除了get_context_data(),把点击量增加的步骤写到了get_object()里
 class ArticleDetailView(LoginRequiredMixin,FrontMixin,AjaxResponseMixin,DetailView):
@@ -120,8 +127,14 @@ class CategoryWeightView(LoginRequiredMixin,FrontMixin,AjaxResponseMixin,ListVie
 
     #TODO:后期可以加上category=None的情况。
     def get_queryset(self) -> QuerySet[Any]:
-        category=get_object_or_404(Category,pk=self.kwargs['pk'])
-        return Article.objects.filter(category=category)   
+        try:
+            if self.kwargs['pk']==0:
+                return Article.objects.filter(category=None)
+            
+            category=get_object_or_404(Category,pk=self.kwargs['pk'])
+            return Article.objects.filter(category=category)   
+        except Http404 as e:
+            return Article.objects.all()
         
 class CategoryUpdateView(LoginRequiredMixin,AtomicMixin,AjaxResponseMixin,UpdateView):
     model=Category

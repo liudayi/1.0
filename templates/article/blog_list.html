@@ -22,7 +22,7 @@
                 {% for item in essay_list %}
                     <tr>
                         <td>{{ forloop.counter }}</td>
-                        <td>[{{ item.category }}]{{ item.title }}</td>
+                        <td>[{{ item.category|default:"未分类" }}]{{ item.title }}</td>
                         <td>{{ item.author }}</td>
                         <td>{{ item.publish_time }}</td>
                         <td>{{ item.modification_time }}</td>

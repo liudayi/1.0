@@ -5,6 +5,7 @@ from django.urls import reverse
 #三个类+一个抽象基类:category文章分类purepage静态页面article文章base_article抽象基类
 class base_article(models.Model):
     title=models.CharField(verbose_name=("标题"), max_length=50)
+    #TODO:暂时没有提供注销用户的功能
     author=models.ForeignKey(User,verbose_name="作者",on_delete=models.SET_NULL,null=True,blank=True)
     content=models.TextField(verbose_name="内容")
     publish_time=models.DateTimeField(auto_now_add=True,verbose_name="发布时间")
@@ -15,7 +16,7 @@ class base_article(models.Model):
         abstract=True
     
 class Category(models.Model):
-    name=models.CharField(max_length=50,default="未分类",verbose_name="类别名称")
+    name=models.CharField(max_length=50,verbose_name="类别名称")
 
     """ @property
     def blog_number(self):

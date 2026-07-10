@@ -18,13 +18,23 @@
             </div>
 
             <div class="col-md-6 col-xs-6">
-                <a href="{% url 'category-article-list' article.category.id %}">
-                    <span class="label label-default">
-                        <span class="text-left">
-                            <span class="glyphicon glyphicon-tags" aria-hidden="true"></span>
-                            &emsp;{{ article.category }}</span>
-                        </span>
-                    </a>
+                {% if article.category_id%}
+                    <a href="{% url 'category-article-list' article.category.id %}">
+                        <span class="label label-default">
+                            <span class="text-left">
+                                <span class="glyphicon glyphicon-tags" aria-hidden="true"></span>
+                                &emsp;{{ article.category }}</span>
+                            </span>
+                        </a>
+                {% else %}
+                    <a href="{% url 'category-article-list' 0 %}">
+                        <span class="label label-default">
+                            <span class="text-left">
+                                <span class="glyphicon glyphicon-tags" aria-hidden="true"></span>
+                                &emsp;{{ '未分类' }}</span>
+                            </span>
+                        </a>
+                {% endif %}
             </div>
             <div class="col-md-6 text-right col-xs-6">
                 <a role="button" class="btn btn-info btn-xs" href="{% url 'blog-detail' article.id %}"><span class="glyphicon glyphicon-console" aria-hidden="true"></span>&emsp;查看详情</a>
